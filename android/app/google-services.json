@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "27734595837",
+    "firebase_url": "https://football-firebase-3e1e0-default-rtdb.firebaseio.com",
+    "project_id": "football-firebase-3e1e0",
+    "storage_bucket": "football-firebase-3e1e0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27734595837:android:4da32a5b6437fbf599c694",
+        "android_client_info": {
+          "package_name": "com.example.football_admin_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-jokOwij1LHflFrlaQnI0A3yNNRwmXqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27734595837:android:7f77f952c23a71aa99c694",
+        "android_client_info": {
+          "package_name": "com.example.football_firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-jokOwij1LHflFrlaQnI0A3yNNRwmXqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27734595837:android:627380d25160f55099c694",
+        "android_client_info": {
+          "package_name": "com.example.moon_admin_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-jokOwij1LHflFrlaQnI0A3yNNRwmXqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
