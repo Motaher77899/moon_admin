@@ -121,47 +121,30 @@ class TeamProvider extends ChangeNotifier {
 
   // ✅ NEW: Fetch team players for lineup selection
   Future<void> fetchTeamPlayers(String teamId) async {
-    debugPrint('═══════════════════════════════════');
-    debugPrint('🔄 Fetching players for team: $teamId');
-    debugPrint('═══════════════════════════════════');
-
     try {
-      // Query players collection where teamId matches
-      final snapshot = await FirebaseFirestore.instance
-          .collection('players')
-          .where('teamId', isEqualTo: teamId)
+      final teamDoc = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(teamId)
           .get();
 
-      debugPrint('📦 Found ${snapshot.docs.length} players for team $teamId');
+      final playerIds = List<String>.from(teamDoc.data()?['playerIds'] ?? []);
 
-      if (snapshot.docs.isEmpty) {
-        debugPrint('⚠️  No players found for this team');
-        teamPlayers[teamId] = [];
-      } else {
-        final players = snapshot.docs.map((doc) {
-          try {
-            return PlayerModel.fromFirestore(doc);
-          } catch (e) {
-            debugPrint('❌ Error parsing player ${doc.id}: $e');
-            return null;
-          }
-        }).whereType<PlayerModel>().toList();
+      List<PlayerModel> players = [];
+      for (String playerId in playerIds) {
+        final playerDoc = await FirebaseFirestore.instance
+            .collection('players')
+            .doc(playerId)
+            .get();
 
-        teamPlayers[teamId] = players;
-
-        debugPrint('✅ Loaded ${players.length} players:');
-        for (var player in players) {
-          debugPrint('   - ${player.name} (#${player.jerseyNumber}) - ${player.position}');
+        if (playerDoc.exists) {
+          players.add(PlayerModel.fromFirestore(playerDoc));
         }
       }
 
-      debugPrint('═══════════════════════════════════');
+      teamPlayers[teamId] = players;
       notifyListeners();
-    } catch (e, stackTrace) {
-      debugPrint('❌ ERROR fetching team players: $e');
-      debugPrint('Stack: $stackTrace');
-      teamPlayers[teamId] = [];
-      notifyListeners();
+    } catch (e) {
+      debugPrint('Error fetching team players: $e');
     }
   }
 

@@ -1044,6 +1044,707 @@
 //     );
 //   }
 // }
+//
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import '../../providers/match_provider.dart';
+// import '../../providers/team_provider.dart';
+// import '../../models/match_model.dart';
+// import '../../models/player_model.dart';
+//
+// class MatchLineupScreen extends StatefulWidget {
+//   final MatchModel match;
+//   final VoidCallback onUpdate;
+//
+//   const MatchLineupScreen({
+//     Key? key,
+//     required this.match,
+//     required this.onUpdate,
+//   }) : super(key: key);
+//
+//   @override
+//   State<MatchLineupScreen> createState() => _MatchLineupScreenState();
+// }
+//
+// class _MatchLineupScreenState extends State<MatchLineupScreen> {
+//   String _selectedTeam = 'teamA'; // 'teamA' or 'teamB'
+//   List<PlayerLineUp> _selectedPlayers = [];
+//   bool _isLoading = false;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadLineup();
+//   }
+//
+//   void _loadLineup() {
+//     // Load saved lineup if exists
+//     if (_selectedTeam == 'teamA' && widget.match.lineUpA != null) {
+//       setState(() {
+//         _selectedPlayers = List.from(widget.match.lineUpA!.players);
+//       });
+//     } else if (_selectedTeam == 'teamB' && widget.match.lineUpB != null) {
+//       setState(() {
+//         _selectedPlayers = List.from(widget.match.lineUpB!.players);
+//       });
+//     }
+//   }
+//
+//   Future<void> _openPlayerSelection() async {
+//     final teamProvider = Provider.of<TeamProvider>(context, listen: false);
+//     String currentTeamId = _selectedTeam == 'teamA' ? widget.match.teamA : widget.match.teamB;
+//
+//     // Fetch team players
+//     await teamProvider.fetchTeamPlayers(currentTeamId);
+//     List<PlayerModel> allPlayers = teamProvider.teamPlayers[currentTeamId] ?? [];
+//
+//     if (allPlayers.isEmpty) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//           content: Text('এই টিমে কোন প্লেয়ার নেই'),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
+//       return;
+//     }
+//
+//     // Navigate to player selection screen
+//     final result = await Navigator.push<List<PlayerLineUp>>(
+//       context,
+//       MaterialPageRoute(
+//         builder: (context) => PlayerSelectionScreen(
+//           allPlayers: allPlayers,
+//           selectedPlayers: _selectedPlayers,
+//           teamName: _selectedTeam == 'teamA' ? widget.match.teamAName : widget.match.teamBName,
+//         ),
+//       ),
+//     );
+//
+//     if (result != null) {
+//       setState(() => _selectedPlayers = result);
+//     }
+//   }
+//
+//   Future<void> _saveLineup() async {
+//     if (_selectedPlayers.isEmpty) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//           content: Text('প্লেয়ার সিলেক্ট করুন'),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
+//       return;
+//     }
+//
+//     setState(() => _isLoading = true);
+//
+//     final matchProvider = Provider.of<MatchProvider>(context, listen: false);
+//
+//     // Create LineUp
+//     final lineup = LineUp(players: _selectedPlayers);
+//
+//     String? error;
+//     if (_selectedTeam == 'teamA') {
+//       error = await matchProvider.updateLineUp(widget.match.id, lineup, null);
+//     } else {
+//       error = await matchProvider.updateLineUp(widget.match.id, null, lineup);
+//     }
+//
+//     setState(() => _isLoading = false);
+//
+//     if (error != null) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text(error), backgroundColor: Colors.red),
+//       );
+//     } else {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//           content: Text('লাইনআপ সংরক্ষিত হয়েছে'),
+//           backgroundColor: Colors.green,
+//         ),
+//       );
+//       widget.onUpdate();
+//     }
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     String teamAName = widget.match.teamAName;
+//     String teamBName = widget.match.teamBName;
+//
+//     return Container(
+//       color: Colors.white,
+//       child: Column(
+//         children: [
+//           // Team Selection Tabs
+//           Container(
+//             margin: const EdgeInsets.all(16),
+//             decoration: BoxDecoration(
+//               border: Border.all(color: Colors.orange, width: 2),
+//               borderRadius: BorderRadius.circular(12),
+//             ),
+//             child: Row(
+//               children: [
+//                 Expanded(
+//                   child: GestureDetector(
+//                     onTap: () {
+//                       setState(() {
+//                         _selectedTeam = 'teamA';
+//                         _loadLineup();
+//                       });
+//                     },
+//                     child: Container(
+//                       padding: const EdgeInsets.symmetric(vertical: 12),
+//                       decoration: BoxDecoration(
+//                         color: _selectedTeam == 'teamA' ? Colors.orange : Colors.white,
+//                         borderRadius: const BorderRadius.only(
+//                           topLeft: Radius.circular(10),
+//                           bottomLeft: Radius.circular(10),
+//                         ),
+//                       ),
+//                       child: Text(
+//                         teamAName,
+//                         textAlign: TextAlign.center,
+//                         style: TextStyle(
+//                           color: _selectedTeam == 'teamA' ? Colors.white : Colors.orange,
+//                           fontWeight: FontWeight.bold,
+//                           fontSize: 16,
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//                 Expanded(
+//                   child: GestureDetector(
+//                     onTap: () {
+//                       setState(() {
+//                         _selectedTeam = 'teamB';
+//                         _loadLineup();
+//                       });
+//                     },
+//                     child: Container(
+//                       padding: const EdgeInsets.symmetric(vertical: 12),
+//                       decoration: BoxDecoration(
+//                         color: _selectedTeam == 'teamB' ? Colors.orange : Colors.white,
+//                         borderRadius: const BorderRadius.only(
+//                           topRight: Radius.circular(10),
+//                           bottomRight: Radius.circular(10),
+//                         ),
+//                       ),
+//                       child: Text(
+//                         teamBName,
+//                         textAlign: TextAlign.center,
+//                         style: TextStyle(
+//                           color: _selectedTeam == 'teamB' ? Colors.white : Colors.orange,
+//                           fontWeight: FontWeight.bold,
+//                           fontSize: 16,
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//
+//           // Line-UP Header with Button
+//           Padding(
+//             padding: const EdgeInsets.symmetric(horizontal: 16),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 const Text(
+//                   'Line-UP',
+//                   style: TextStyle(
+//                     fontSize: 18,
+//                     fontWeight: FontWeight.bold,
+//                     color: Colors.black87,
+//                   ),
+//                 ),
+//                 _selectedPlayers.isEmpty
+//                     ? ElevatedButton.icon(
+//                   onPressed: _openPlayerSelection,
+//                   icon: const Icon(Icons.add, size: 20),
+//                   label: const Text('Add'),
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: Colors.purple,
+//                     foregroundColor: Colors.white,
+//                     shape: RoundedRectangleBorder(
+//                       borderRadius: BorderRadius.circular(20),
+//                     ),
+//                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+//                   ),
+//                 )
+//                     : ElevatedButton.icon(
+//                   onPressed: _openPlayerSelection,
+//                   icon: const Icon(Icons.edit, size: 20),
+//                   label: const Text('Edit'),
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: Colors.purple,
+//                     foregroundColor: Colors.white,
+//                     shape: RoundedRectangleBorder(
+//                       borderRadius: BorderRadius.circular(20),
+//                     ),
+//                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//
+//           const SizedBox(height: 16),
+//
+//           // Player List
+//           Expanded(
+//             child: _selectedPlayers.isEmpty
+//                 ? Center(
+//               child: Column(
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 children: [
+//                   Icon(Icons.groups, size: 80, color: Colors.grey.shade300),
+//                   const SizedBox(height: 16),
+//                   Text(
+//                     'There are no players registered for the\nmatch',
+//                     textAlign: TextAlign.center,
+//                     style: TextStyle(
+//                       color: Colors.grey.shade400,
+//                       fontSize: 14,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             )
+//                 : ListView.builder(
+//               padding: const EdgeInsets.symmetric(horizontal: 16),
+//               itemCount: _selectedPlayers.length,
+//               itemBuilder: (context, index) {
+//                 final player = _selectedPlayers[index];
+//                 return Container(
+//                   margin: const EdgeInsets.only(bottom: 12),
+//                   padding: const EdgeInsets.all(12),
+//                   decoration: BoxDecoration(
+//                     color: Colors.white,
+//                     borderRadius: BorderRadius.circular(12),
+//                     border: Border.all(color: Colors.grey.shade300),
+//                   ),
+//                   child: Row(
+//                     children: [
+//                       // Player Avatar
+//                       Container(
+//                         width: 50,
+//                         height: 50,
+//                         decoration: BoxDecoration(
+//                           color: Colors.grey.shade200,
+//                           shape: BoxShape.circle,
+//                         ),
+//                         child: Icon(
+//                           Icons.person,
+//                           color: Colors.grey.shade400,
+//                           size: 30,
+//                         ),
+//                       ),
+//                       const SizedBox(width: 12),
+//                       // Player Info
+//                       Expanded(
+//                         child: Column(
+//                           crossAxisAlignment: CrossAxisAlignment.start,
+//                           children: [
+//                             Text(
+//                               player.playerName,
+//                               style: const TextStyle(
+//                                 fontWeight: FontWeight.bold,
+//                                 fontSize: 16,
+//                                 color: Colors.black87,
+//                               ),
+//                             ),
+//                             const SizedBox(height: 4),
+//                             Text(
+//                               '${player.position} • #${player.jerseyNumber}',
+//                               style: TextStyle(
+//                                 color: Colors.grey.shade600,
+//                                 fontSize: 12,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
+//                       // Jersey Icon
+//                       Icon(
+//                         Icons.checkroom,
+//                         color: Colors.red,
+//                         size: 30,
+//                       ),
+//                     ],
+//                   ),
+//                 );
+//               },
+//             ),
+//           ),
+//
+//           // Save Button (show only if players selected)
+//           if (_selectedPlayers.isNotEmpty)
+//             Container(
+//               padding: const EdgeInsets.all(16),
+//               child: SizedBox(
+//                 width: double.infinity,
+//                 height: 50,
+//                 child: ElevatedButton(
+//                   onPressed: _isLoading ? null : _saveLineup,
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: Colors.orange,
+//                     shape: RoundedRectangleBorder(
+//                       borderRadius: BorderRadius.circular(12),
+//                     ),
+//                   ),
+//                   child: _isLoading
+//                       ? const SizedBox(
+//                     height: 24,
+//                     width: 24,
+//                     child: CircularProgressIndicator(
+//                       color: Colors.white,
+//                       strokeWidth: 2,
+//                     ),
+//                   )
+//                       : const Text(
+//                     'সংরক্ষণ করুন',
+//                     style: TextStyle(
+//                       fontSize: 16,
+//                       fontWeight: FontWeight.bold,
+//                       color: Colors.white,
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+//
+// // Player Selection Screen
+// class PlayerSelectionScreen extends StatefulWidget {
+//   final List<PlayerModel> allPlayers;
+//   final List<PlayerLineUp> selectedPlayers;
+//   final String teamName;
+//
+//   const PlayerSelectionScreen({
+//     Key? key,
+//     required this.allPlayers,
+//     required this.selectedPlayers,
+//     required this.teamName,
+//   }) : super(key: key);
+//
+//   @override
+//   State<PlayerSelectionScreen> createState() => _PlayerSelectionScreenState();
+// }
+//
+// class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
+//   List<PlayerLineUp> _tempSelected = [];
+//   int _mainPlayersCount = 0;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _tempSelected = List.from(widget.selectedPlayers);
+//     _calculateCounts();
+//   }
+//
+//   void _calculateCounts() {
+//     _mainPlayersCount = _tempSelected.where((p) => !p.isSubstitute).length;
+//   }
+//
+//   void _togglePlayer(PlayerModel player) {
+//     setState(() {
+//       final index = _tempSelected.indexWhere((p) => p.playerId == player.id);
+//       if (index != -1) {
+//         _tempSelected.removeAt(index);
+//       } else {
+//         // Convert PlayerModel to PlayerLineUp
+//         _tempSelected.add(PlayerLineUp(
+//           playerId: player.id,
+//           playerName: player.name,
+//           position: player.position,
+//           jerseyNumber: player.jerseyNumber ?? 0,
+//           isSubstitute: false,
+//         ));
+//       }
+//       _calculateCounts();
+//     });
+//   }
+//
+//   void _toggleSubstitute(PlayerModel player) {
+//     setState(() {
+//       final index = _tempSelected.indexWhere((p) => p.playerId == player.id);
+//       if (index != -1) {
+//         _tempSelected[index] = PlayerLineUp(
+//           playerId: player.id,
+//           playerName: player.name,
+//           position: player.position,
+//           jerseyNumber: player.jerseyNumber ?? 0,
+//           isSubstitute: !_tempSelected[index].isSubstitute,
+//         );
+//         _calculateCounts();
+//       }
+//     });
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     // Group players by position
+//     Map<String, List<PlayerModel>> groupedPlayers = {
+//       'Goalkeepers': [],
+//       'Defenses': [],
+//       'Midfielders': [],
+//       'Forwards': [],
+//     };
+//
+//     for (var player in widget.allPlayers) {
+//       String pos = player.position.trim();
+//
+//       // Check for goalkeeper
+//       if (pos == 'GK' ||
+//           pos.toUpperCase() == 'GOALKEEPER' ||
+//           pos == 'গোলরক্ষক' ||
+//           pos == 'গোলকিপার') {
+//         groupedPlayers['Goalkeepers']!.add(player);
+//       }
+//       // Check for defender
+//       else if (pos == 'DEF' ||
+//           pos.toUpperCase() == 'DEFENDER' ||
+//           pos.toUpperCase() == 'DEFENCE' ||
+//           pos == 'ডিফেন্ডার' ||
+//           pos == 'রক্ষক') {
+//         groupedPlayers['Defenses']!.add(player);
+//       }
+//       // Check for midfielder
+//       else if (pos == 'MID' ||
+//           pos.toUpperCase() == 'MIDFIELDER' ||
+//           pos.toUpperCase() == 'MIDFIELD' ||
+//           pos == 'মিডফিল্ডার' ||
+//           pos == 'মধ্যমাঠ') {
+//         groupedPlayers['Midfielders']!.add(player);
+//       }
+//       // Check for forward
+//       else if (pos == 'FWD' ||
+//           pos.toUpperCase() == 'FORWARD' ||
+//           pos.toUpperCase() == 'STRIKER' ||
+//           pos.toUpperCase() == 'ATTACKER' ||
+//           pos == 'ফরওয়ার্ড' ||
+//           pos == 'আক্রমণভাগ' ||
+//           pos == 'স্ট্রাইকার') {
+//         groupedPlayers['Forwards']!.add(player);
+//       }
+//       // Default to Forwards if unknown
+//       else {
+//         debugPrint('⚠️ Unknown position: "$pos" for ${player.name}, adding to Forwards');
+//         groupedPlayers['Forwards']!.add(player);
+//       }
+//     }
+//
+//     return Scaffold(
+//       backgroundColor: Colors.grey.shade100,
+//       appBar: AppBar(
+//         backgroundColor: Colors.white,
+//         elevation: 1,
+//         leading: IconButton(
+//           icon: const Icon(Icons.arrow_back, color: Colors.black),
+//           onPressed: () => Navigator.pop(context),
+//         ),
+//         title: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             const Text(
+//               'Line-UP',
+//               style: TextStyle(
+//                 color: Colors.black87,
+//                 fontSize: 18,
+//                 fontWeight: FontWeight.bold,
+//               ),
+//             ),
+//             Text(
+//               widget.teamName,
+//               style: TextStyle(
+//                 color: Colors.grey.shade600,
+//                 fontSize: 12,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//       body: Column(
+//         children: [
+//           // Counter
+//           Container(
+//             padding: const EdgeInsets.all(16),
+//             color: Colors.white,
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 const Text(
+//                   'Players selection',
+//                   style: TextStyle(
+//                     fontSize: 16,
+//                     fontWeight: FontWeight.bold,
+//                     color: Colors.black87,
+//                   ),
+//                 ),
+//                 Text(
+//                   '$_mainPlayersCount / 11',
+//                   style: const TextStyle(
+//                     fontSize: 16,
+//                     fontWeight: FontWeight.bold,
+//                     color: Colors.orange,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//
+//           // Player List by Position
+//           Expanded(
+//             child: ListView(
+//               padding: const EdgeInsets.all(16),
+//               children: groupedPlayers.entries.where((e) => e.value.isNotEmpty).expand((entry) {
+//                 return [
+//                   Padding(
+//                     padding: const EdgeInsets.only(top: 16, bottom: 8),
+//                     child: Text(
+//                       entry.key,
+//                       style: const TextStyle(
+//                         fontSize: 16,
+//                         fontWeight: FontWeight.bold,
+//                         color: Colors.black87,
+//                       ),
+//                     ),
+//                   ),
+//                   ...entry.value.map((player) => _buildPlayerCard(player)),
+//                 ];
+//               }).toList(),
+//             ),
+//           ),
+//
+//           // Done Button
+//           Container(
+//             padding: const EdgeInsets.all(16),
+//             color: Colors.white,
+//             child: SizedBox(
+//               width: double.infinity,
+//               height: 50,
+//               child: ElevatedButton(
+//                 onPressed: () => Navigator.pop(context, _tempSelected),
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: Colors.orange,
+//                   shape: RoundedRectangleBorder(
+//                     borderRadius: BorderRadius.circular(12),
+//                   ),
+//                 ),
+//                 child: const Text(
+//                   'Done',
+//                   style: TextStyle(
+//                     fontSize: 16,
+//                     fontWeight: FontWeight.bold,
+//                     color: Colors.white,
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+//
+//   Widget _buildPlayerCard(PlayerModel player) {
+//     bool isSelected = _tempSelected.any((p) => p.playerId == player.id);
+//     bool isSubstitute = isSelected
+//         ? _tempSelected.firstWhere((p) => p.playerId == player.id).isSubstitute
+//         : false;
+//
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 12),
+//       padding: const EdgeInsets.all(12),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(12),
+//         border: Border.all(
+//           color: isSelected ? Colors.green : Colors.grey.shade300,
+//           width: isSelected ? 2 : 1,
+//         ),
+//       ),
+//       child: Row(
+//         children: [
+//           // Avatar
+//           Container(
+//             width: 50,
+//             height: 50,
+//             decoration: BoxDecoration(
+//               color: Colors.grey.shade200,
+//               shape: BoxShape.circle,
+//             ),
+//             child: Icon(Icons.person, color: Colors.grey.shade400, size: 30),
+//           ),
+//           const SizedBox(width: 12),
+//           // Player Info
+//           Expanded(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   player.name,
+//                   style: const TextStyle(
+//                     fontWeight: FontWeight.bold,
+//                     fontSize: 16,
+//                     color: Colors.black87,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 4),
+//                 Text(
+//                   '${player.position} • #${player.jerseyNumber ?? 0}',
+//                   style: TextStyle(
+//                     color: Colors.grey.shade600,
+//                     fontSize: 12,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           // Substitute Toggle
+//           if (isSelected)
+//             GestureDetector(
+//               onTap: () => _toggleSubstitute(player),
+//               child: Icon(
+//                 Icons.checkroom,
+//                 color: isSubstitute ? Colors.grey : Colors.green,
+//                 size: 30,
+//               ),
+//             ),
+//           const SizedBox(width: 8),
+//           // Selection Checkbox
+//           GestureDetector(
+//             onTap: () => _togglePlayer(player),
+//             child: Container(
+//               width: 24,
+//               height: 24,
+//               decoration: BoxDecoration(
+//                 color: isSelected ? Colors.green : Colors.white,
+//                 border: Border.all(
+//                   color: isSelected ? Colors.green : Colors.grey.shade400,
+//                   width: 2,
+//                 ),
+//                 borderRadius: BorderRadius.circular(4),
+//               ),
+//               child: isSelected
+//                   ? const Icon(Icons.check, color: Colors.white, size: 16)
+//                   : null,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -1067,7 +1768,7 @@ class MatchLineupScreen extends StatefulWidget {
 }
 
 class _MatchLineupScreenState extends State<MatchLineupScreen> {
-  String _selectedTeam = 'teamA'; // 'teamA' or 'teamB'
+  String _selectedTeam = 'teamA';
   List<PlayerLineUp> _selectedPlayers = [];
   bool _isLoading = false;
 
@@ -1077,26 +1778,37 @@ class _MatchLineupScreenState extends State<MatchLineupScreen> {
     _loadLineup();
   }
 
-  void _loadLineup() {
-    // Load saved lineup if exists
-    if (_selectedTeam == 'teamA' && widget.match.lineUpA != null) {
-      setState(() {
-        _selectedPlayers = List.from(widget.match.lineUpA!.players);
-      });
-    } else if (_selectedTeam == 'teamB' && widget.match.lineUpB != null) {
-      setState(() {
-        _selectedPlayers = List.from(widget.match.lineUpB!.players);
-      });
+  @override
+  void didUpdateWidget(MatchLineupScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.match != widget.match) {
+      _loadLineup();
     }
+  }
+
+  void _loadLineup() {
+    _selectedPlayers.clear();
+
+    if (_selectedTeam == 'teamA' && widget.match.lineUpA != null) {
+      _selectedPlayers = List.from(widget.match.lineUpA!.players);
+    } else if (_selectedTeam == 'teamB' && widget.match.lineUpB != null) {
+      _selectedPlayers = List.from(widget.match.lineUpB!.players);
+    }
+
+    setState(() {});
   }
 
   Future<void> _openPlayerSelection() async {
     final teamProvider = Provider.of<TeamProvider>(context, listen: false);
     String currentTeamId = _selectedTeam == 'teamA' ? widget.match.teamA : widget.match.teamB;
+    String currentTeamName = _selectedTeam == 'teamA' ? widget.match.teamAName : widget.match.teamBName;
 
-    // Fetch team players
+    // ✅ Fetch করো শুধু এই team এর players
     await teamProvider.fetchTeamPlayers(currentTeamId);
     List<PlayerModel> allPlayers = teamProvider.teamPlayers[currentTeamId] ?? [];
+
+    debugPrint('🎯 Selected Team: $currentTeamName (ID: $currentTeamId)');
+    debugPrint('📊 Team Players: ${allPlayers.length}');
 
     if (allPlayers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1108,14 +1820,13 @@ class _MatchLineupScreenState extends State<MatchLineupScreen> {
       return;
     }
 
-    // Navigate to player selection screen
     final result = await Navigator.push<List<PlayerLineUp>>(
       context,
       MaterialPageRoute(
         builder: (context) => PlayerSelectionScreen(
           allPlayers: allPlayers,
           selectedPlayers: _selectedPlayers,
-          teamName: _selectedTeam == 'teamA' ? widget.match.teamAName : widget.match.teamBName,
+          teamName: currentTeamName,
         ),
       ),
     );
@@ -1140,8 +1851,10 @@ class _MatchLineupScreenState extends State<MatchLineupScreen> {
 
     final matchProvider = Provider.of<MatchProvider>(context, listen: false);
 
-    // Create LineUp
-    final lineup = LineUp(players: _selectedPlayers);
+    final lineup = LineUp(
+      formation: '4-4-2',
+      players: _selectedPlayers,
+    );
 
     String? error;
     if (_selectedTeam == 'teamA') {
@@ -1188,10 +1901,12 @@ class _MatchLineupScreenState extends State<MatchLineupScreen> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      setState(() {
-                        _selectedTeam = 'teamA';
+                      if (_selectedTeam != 'teamA') {
+                        setState(() {
+                          _selectedTeam = 'teamA';
+                        });
                         _loadLineup();
-                      });
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1217,10 +1932,12 @@ class _MatchLineupScreenState extends State<MatchLineupScreen> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      setState(() {
-                        _selectedTeam = 'teamB';
+                      if (_selectedTeam != 'teamB') {
+                        setState(() {
+                          _selectedTeam = 'teamB';
+                        });
                         _loadLineup();
-                      });
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1371,7 +2088,7 @@ class _MatchLineupScreenState extends State<MatchLineupScreen> {
                       // Jersey Icon
                       Icon(
                         Icons.checkroom,
-                        color: Colors.red,
+                        color: player.isSubstitute ? Colors.grey : Colors.red,
                         size: 30,
                       ),
                     ],
@@ -1381,7 +2098,7 @@ class _MatchLineupScreenState extends State<MatchLineupScreen> {
             ),
           ),
 
-          // Save Button (show only if players selected)
+          // Save Button
           if (_selectedPlayers.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(16),
@@ -1422,9 +2139,9 @@ class _MatchLineupScreenState extends State<MatchLineupScreen> {
   }
 }
 
-// Player Selection Screen
+// ============ Player Selection Screen ============
 class PlayerSelectionScreen extends StatefulWidget {
-  final List<PlayerModel> allPlayers;
+  final List<PlayerModel> allPlayers; // ✅ এখন শুধু এই team এর players আসবে
   final List<PlayerLineUp> selectedPlayers;
   final String teamName;
 
@@ -1440,214 +2157,138 @@ class PlayerSelectionScreen extends StatefulWidget {
 }
 
 class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
-  List<PlayerLineUp> _tempSelected = [];
-  int _mainPlayersCount = 0;
+  late List<PlayerLineUp> _tempSelected;
+  int _mainCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _tempSelected = List.from(widget.selectedPlayers);
-    _calculateCounts();
+    _tempSelected = widget.selectedPlayers.map((e) => e.copyWith()).toList();
+    _updateCount();
+
+    // ✅ Debug করার জন্য
+    debugPrint('👥 Available players for ${widget.teamName}: ${widget.allPlayers.length}');
   }
 
-  void _calculateCounts() {
-    _mainPlayersCount = _tempSelected.where((p) => !p.isSubstitute).length;
-  }
+  void _updateCount() => _mainCount = _tempSelected.where((p) => !p.isSubstitute).length;
 
   void _togglePlayer(PlayerModel player) {
     setState(() {
-      final index = _tempSelected.indexWhere((p) => p.playerId == player.id);
-      if (index != -1) {
-        _tempSelected.removeAt(index);
+      final i = _tempSelected.indexWhere((p) => p.playerId == player.id);
+      if (i != -1) {
+        _tempSelected.removeAt(i);
       } else {
-        // Convert PlayerModel to PlayerLineUp
         _tempSelected.add(PlayerLineUp(
           playerId: player.id,
           playerName: player.name,
           position: player.position,
           jerseyNumber: player.jerseyNumber ?? 0,
           isSubstitute: false,
+          isCaptain: false,
         ));
       }
-      _calculateCounts();
+      _updateCount();
     });
   }
 
   void _toggleSubstitute(PlayerModel player) {
     setState(() {
-      final index = _tempSelected.indexWhere((p) => p.playerId == player.id);
-      if (index != -1) {
-        _tempSelected[index] = PlayerLineUp(
-          playerId: player.id,
-          playerName: player.name,
-          position: player.position,
-          jerseyNumber: player.jerseyNumber ?? 0,
-          isSubstitute: !_tempSelected[index].isSubstitute,
-        );
-        _calculateCounts();
+      final i = _tempSelected.indexWhere((p) => p.playerId == player.id);
+      if (i != -1) {
+        _tempSelected[i] = _tempSelected[i].copyWith(isSubstitute: !_tempSelected[i].isSubstitute);
+        _updateCount();
       }
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // Group players by position
-    Map<String, List<PlayerModel>> groupedPlayers = {
-      'Goalkeepers': [],
-      'Defenses': [],
-      'Midfielders': [],
-      'Forwards': [],
+  void _toggleCaptain(PlayerModel player) {
+    setState(() {
+      _tempSelected = _tempSelected.map((p) => p.copyWith(isCaptain: p.playerId == player.id)).toList();
+    });
+  }
+
+  Map<String, List<PlayerModel>> _groupPlayers() {
+    final map = <String, List<PlayerModel>>{
+      'গোলকিপার': [], 'ডিফেন্ডার': [], 'মিডফিল্ডার': [], 'ফরওয়ার্ড': [],
     };
-
-    for (var player in widget.allPlayers) {
-      String pos = player.position.trim();
-
-      // Check for goalkeeper
-      if (pos == 'GK' ||
-          pos.toUpperCase() == 'GOALKEEPER' ||
-          pos == 'গোলরক্ষক' ||
-          pos == 'গোলকিপার') {
-        groupedPlayers['Goalkeepers']!.add(player);
-      }
-      // Check for defender
-      else if (pos == 'DEF' ||
-          pos.toUpperCase() == 'DEFENDER' ||
-          pos.toUpperCase() == 'DEFENCE' ||
-          pos == 'ডিফেন্ডার' ||
-          pos == 'রক্ষক') {
-        groupedPlayers['Defenses']!.add(player);
-      }
-      // Check for midfielder
-      else if (pos == 'MID' ||
-          pos.toUpperCase() == 'MIDFIELDER' ||
-          pos.toUpperCase() == 'MIDFIELD' ||
-          pos == 'মিডফিল্ডার' ||
-          pos == 'মধ্যমাঠ') {
-        groupedPlayers['Midfielders']!.add(player);
-      }
-      // Check for forward
-      else if (pos == 'FWD' ||
-          pos.toUpperCase() == 'FORWARD' ||
-          pos.toUpperCase() == 'STRIKER' ||
-          pos.toUpperCase() == 'ATTACKER' ||
-          pos == 'ফরওয়ার্ড' ||
-          pos == 'আক্রমণভাগ' ||
-          pos == 'স্ট্রাইকার') {
-        groupedPlayers['Forwards']!.add(player);
-      }
-      // Default to Forwards if unknown
-      else {
-        debugPrint('⚠️ Unknown position: "$pos" for ${player.name}, adding to Forwards');
-        groupedPlayers['Forwards']!.add(player);
+    for (var p in widget.allPlayers) {
+      final pos = p.position.toUpperCase();
+      if (pos.contains('GK') || pos.contains('GOAL')) {
+        map['গোলকিপার']!.add(p);
+      } else if (pos.contains('DEF') || pos.contains('BACK')) {
+        map['ডিফেন্ডার']!.add(p);
+      } else if (pos.contains('MID')) {
+        map['মিডফিল্ডার']!.add(p);
+      } else {
+        map['ফরওয়ার্ড']!.add(p);
       }
     }
+    return map;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final groups = _groupPlayers();
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
+        title: Text('লাইনআপ — ${widget.teamName}'),
         backgroundColor: Colors.white,
-        elevation: 1,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Line-UP',
-              style: TextStyle(
-                color: Colors.black87,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              widget.teamName,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
       ),
       body: Column(
         children: [
-          // Counter
           Container(
-            padding: const EdgeInsets.all(16),
             color: Colors.white,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Players selection',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                Text(
-                  '$_mainPlayersCount / 11',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'মূল একাদশ: $_mainCount / 11',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange),
             ),
           ),
-
-          // Player List by Position
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: groupedPlayers.entries.where((e) => e.value.isNotEmpty).expand((entry) {
-                return [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16, bottom: 8),
-                    child: Text(
-                      entry.key,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
+            child: widget.allPlayers.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.group_off, size: 80, color: Colors.grey.shade400),
+                  const SizedBox(height: 16),
+                  Text(
+                    'এই টিমে কোন খেলোয়াড় নেই',
+                    style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
                   ),
-                  ...entry.value.map((player) => _buildPlayerCard(player)),
-                ];
-              }).toList(),
+                  const SizedBox(height: 8),
+                  Text(
+                    'প্রথমে টিমে খেলোয়াড় যোগ করুন',
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
+            )
+                : ListView(
+              padding: const EdgeInsets.all(16),
+              children: groups.entries.where((e) => e.value.isNotEmpty).expand((e) => [
+                Padding(
+                  padding: const EdgeInsets.only(top: 20, bottom: 8),
+                  child: Text(e.key, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+                ...e.value.map(_buildCard),
+                const SizedBox(height: 10),
+              ]).toList(),
             ),
           ),
-
-          // Done Button
           Container(
-            padding: const EdgeInsets.all(16),
             color: Colors.white,
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context, _tempSelected),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Done',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+            padding: const EdgeInsets.all(20),
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context, _tempSelected),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                minimumSize: const Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
+              child: const Text('সম্পন্ন করুন', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -1655,91 +2296,41 @@ class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
     );
   }
 
-  Widget _buildPlayerCard(PlayerModel player) {
-    bool isSelected = _tempSelected.any((p) => p.playerId == player.id);
-    bool isSubstitute = isSelected
-        ? _tempSelected.firstWhere((p) => p.playerId == player.id).isSubstitute
-        : false;
+  Widget _buildCard(PlayerModel player) {
+    // ✅ Standard Dart firstWhere with orElse
+    final lineUpPlayer = _tempSelected.cast<PlayerLineUp?>().firstWhere(
+          (p) => p?.playerId == player.id,
+      orElse: () => null,
+    );
+    final selected = lineUpPlayer != null;
+    final isSub = lineUpPlayer?.isSubstitute ?? false;
+    final isCaptain = lineUpPlayer?.isCaptain ?? false;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? Colors.green : Colors.grey.shade300,
-          width: isSelected ? 2 : 1,
+    return Card(
+      elevation: 4,
+      child: ListTile(
+        leading: CircleAvatar(child: Text(player.jerseyNumber?.toString() ?? '?')),
+        title: Text(player.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(player.position),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected && !isSub)
+              IconButton(
+                icon: Icon(Icons.star, color: isCaptain ? Colors.amber : Colors.grey),
+                onPressed: () => _toggleCaptain(player),
+              ),
+            if (selected)
+              IconButton(
+                icon: Icon(Icons.event_seat, color: isSub ? Colors.orange : Colors.grey),
+                onPressed: () => _toggleSubstitute(player),
+              ),
+            IconButton(
+              icon: Icon(selected ? Icons.check_circle : Icons.add_circle_outline, color: selected ? Colors.green : Colors.grey),
+              onPressed: () => _togglePlayer(player),
+            ),
+          ],
         ),
-      ),
-      child: Row(
-        children: [
-          // Avatar
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.person, color: Colors.grey.shade400, size: 30),
-          ),
-          const SizedBox(width: 12),
-          // Player Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  player.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${player.position} • #${player.jerseyNumber ?? 0}',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Substitute Toggle
-          if (isSelected)
-            GestureDetector(
-              onTap: () => _toggleSubstitute(player),
-              child: Icon(
-                Icons.checkroom,
-                color: isSubstitute ? Colors.grey : Colors.green,
-                size: 30,
-              ),
-            ),
-          const SizedBox(width: 8),
-          // Selection Checkbox
-          GestureDetector(
-            onTap: () => _togglePlayer(player),
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.green : Colors.white,
-                border: Border.all(
-                  color: isSelected ? Colors.green : Colors.grey.shade400,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: isSelected
-                  ? const Icon(Icons.check, color: Colors.white, size: 16)
-                  : null,
-            ),
-          ),
-        ],
       ),
     );
   }
