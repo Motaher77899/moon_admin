@@ -333,6 +333,7 @@
 // }
 
 
+import 'package:admin_football_app/screens/tournament/tournament_match_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -442,7 +443,12 @@ class TournamentMatchesTab extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // Navigate to match detail if needed
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TournamentMatchDetailsScreen(matchId: match.matchId!),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(

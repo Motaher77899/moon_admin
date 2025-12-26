@@ -1,9 +1,10 @@
+//
 // import 'package:flutter/material.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import '../models/admin_user.dart';
 //
-// class AuthProvider extends ChangeNotifier {
+// class AuthProvider with ChangeNotifier {
 //   final FirebaseAuth _auth = FirebaseAuth.instance;
 //   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 //
@@ -14,127 +15,81 @@
 //   bool get isLoading => _isLoading;
 //
 //   AuthProvider() {
-//     _initAuth();
+//     _checkAuthState();
 //   }
 //
-//   // Initialize auth state
-//   void _initAuth() async {
-//     _auth.authStateChanges().listen((User? user) async {
-//       if (user != null) {
-//         await _loadAdminData(user.uid);
-//       } else {
-//         _currentAdmin = null;
-//         _isLoading = false;
-//         notifyListeners();
-//       }
-//     });
-//   }
+//   Future<void> _checkAuthState() async {
+//     _isLoading = true;
+//     notifyListeners();
 //
-//   // Load admin data from Firestore
-//   Future<void> _loadAdminData(String uid) async {
-//     try {
-//       DocumentSnapshot doc = await _firestore.collection('admins').doc(uid).get();
-//       if (doc.exists) {
-//         _currentAdmin = AdminUser.fromFirestore(doc);
+//     User? user = _auth.currentUser;
+//
+//     if (user != null) {
+//       // Check if user is admin
+//       DocumentSnapshot adminDoc = await _firestore
+//           .collection('admins')
+//           .doc(user.uid)
+//           .get();
+//
+//       if (adminDoc.exists) {
+//         _currentAdmin = AdminUser.fromFirestore(adminDoc);
+//         print('✅ Admin logged in: ${_currentAdmin?.fullName}');
 //       } else {
-//         _currentAdmin = null;
+//         print('❌ User is not an admin');
 //         await _auth.signOut();
 //       }
-//     } catch (e) {
-//       print('Error loading admin data: $e');
-//       _currentAdmin = null;
-//     } finally {
-//       _isLoading = false;
-//       notifyListeners();
 //     }
+//
+//     _isLoading = false;
+//     notifyListeners();
 //   }
 //
-//   // Admin Login
-//   Future<String?> login(String email, String password) async {
+//   Future<String?> signin(String email, String password) async {
 //     try {
-//       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+//       UserCredential credential = await _auth.signInWithEmailAndPassword(
 //         email: email,
 //         password: password,
 //       );
 //
-//       // Check if user is an admin
+//       // Check if user is admin
 //       DocumentSnapshot adminDoc = await _firestore
 //           .collection('admins')
-//           .doc(userCredential.user!.uid)
+//           .doc(credential.user!.uid)
 //           .get();
 //
 //       if (!adminDoc.exists) {
 //         await _auth.signOut();
-//         return 'আপনি একজন অ্যাডমিন নন';
+//         return 'আপনি অ্যাডমিন নন';
 //       }
 //
-//       return null; // Success
+//       _currentAdmin = AdminUser.fromFirestore(adminDoc);
+//       notifyListeners();
+//       return null;
 //     } on FirebaseAuthException catch (e) {
 //       if (e.code == 'user-not-found') {
-//         return 'এই ইমেইল দিয়ে কোন অ্যাকাউন্ট নেই';
+//         return 'ইউজার খুঁজে পাওয়া যায়নি';
 //       } else if (e.code == 'wrong-password') {
 //         return 'ভুল পাসওয়ার্ড';
-//       } else if (e.code == 'invalid-email') {
-//         return 'ভুল ইমেইল ফরম্যাট';
-//       } else {
-//         return 'লগইন করতে সমস্যা হয়েছে: ${e.message}';
 //       }
+//       return e.message;
 //     } catch (e) {
-//       return 'একটি সমস্যা হয়েছে: $e';
+//       return e.toString();
 //     }
 //   }
 //
-//   // Admin Registration
-//   Future<String?> register(String email, String password, String fullName) async {
-//     try {
-//       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-//         email: email,
-//         password: password,
-//       );
-//
-//       // Create admin document
-//       AdminUser newAdmin = AdminUser(
-//         uid: userCredential.user!.uid,
-//         email: email,
-//         fullName: fullName,
-//         role: 'admin',
-//         createdAt: DateTime.now(),
-//       );
-//
-//       await _firestore
-//           .collection('admins')
-//           .doc(userCredential.user!.uid)
-//           .set(newAdmin.toFirestore());
-//
-//       return null; // Success
-//     } on FirebaseAuthException catch (e) {
-//       if (e.code == 'weak-password') {
-//         return 'পাসওয়ার্ড খুবই দুর্বল';
-//       } else if (e.code == 'email-already-in-use') {
-//         return 'এই ইমেইল ইতিমধ্যে ব্যবহৃত হয়েছে';
-//       } else if (e.code == 'invalid-email') {
-//         return 'ভুল ইমেইল ফরম্যাট';
-//       } else {
-//         return 'রেজিস্ট্রেশন করতে সমস্যা হয়েছে: ${e.message}';
-//       }
-//     } catch (e) {
-//       return 'একটি সমস্যা হয়েছে: $e';
-//     }
-//   }
-//
-//   // Logout
 //   Future<void> logout() async {
 //     await _auth.signOut();
 //     _currentAdmin = null;
 //     notifyListeners();
 //   }
 // }
+//
+
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/admin_user.dart';
-
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -156,18 +111,24 @@ class AuthProvider with ChangeNotifier {
     User? user = _auth.currentUser;
 
     if (user != null) {
-      // Check if user is admin
-      DocumentSnapshot adminDoc = await _firestore
-          .collection('admins')
-          .doc(user.uid)
-          .get();
+      try {
+        // 'users' কালেকশন থেকে চেক করা হচ্ছে যেখানে role = 'admin'
+        DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
-      if (adminDoc.exists) {
-        _currentAdmin = AdminUser.fromFirestore(adminDoc);
-        print('✅ Admin logged in: ${_currentAdmin?.fullName}');
-      } else {
-        print('❌ User is not an admin');
-        await _auth.signOut();
+        if (userDoc.exists && userDoc.get('role') == 'admin') {
+          _currentAdmin = AdminUser.fromFirestore(userDoc);
+          print('✅ Admin logged in: ${_currentAdmin?.fullName}');
+        } else {
+          print('❌ Unauthorized access attempt');
+          await _auth.signOut();
+          _currentAdmin = null;
+        }
+      } catch (e) {
+        print('Error checking auth state: $e');
+        _currentAdmin = null;
       }
     }
 
@@ -182,29 +143,26 @@ class AuthProvider with ChangeNotifier {
         password: password,
       );
 
-      // Check if user is admin
-      DocumentSnapshot adminDoc = await _firestore
-          .collection('admins')
+      // অ্যাডমিন কি না তা 'users' কালেকশনের 'role' ফিল্ড থেকে চেক করা হচ্ছে
+      DocumentSnapshot userDoc = await _firestore
+          .collection('users')
           .doc(credential.user!.uid)
           .get();
 
-      if (!adminDoc.exists) {
+      if (!userDoc.exists || userDoc.get('role') != 'admin') {
         await _auth.signOut();
-        return 'আপনি অ্যাডমিন নন';
+        return 'আপনার অ্যাডমিন এক্সেস নেই। অনুগ্রহ করে কর্তৃপক্ষের সাথে যোগাযোগ করুন।';
       }
 
-      _currentAdmin = AdminUser.fromFirestore(adminDoc);
+      _currentAdmin = AdminUser.fromFirestore(userDoc);
       notifyListeners();
       return null;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        return 'ইউজার খুঁজে পাওয়া যায়নি';
-      } else if (e.code == 'wrong-password') {
-        return 'ভুল পাসওয়ার্ড';
-      }
+      if (e.code == 'user-not-found') return 'ইউজার খুঁজে পাওয়া যায়নি';
+      if (e.code == 'wrong-password') return 'ভুল পাসওয়ার্ড';
       return e.message;
     } catch (e) {
-      return e.toString();
+      return 'একটি সমস্যা হয়েছে: ${e.toString()}';
     }
   }
 
