@@ -250,6 +250,7 @@ class TournamentGroup {
 // TOURNAMENT MATCH MODEL
 // ============================================================================
 class TournamentMatch {
+  final String? tournamentName;
   final String? matchId;
   final String tournamentId;
   final String teamAId;
@@ -268,6 +269,7 @@ class TournamentMatch {
   final DateTime createdAt;
 
   TournamentMatch({
+    this.tournamentName,
     this.matchId,
     required this.tournamentId,
     required this.teamAId,
@@ -289,6 +291,7 @@ class TournamentMatch {
   factory TournamentMatch.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return TournamentMatch(
+      tournamentName: data['tournamentName'],
       matchId: doc.id,
       tournamentId: data['tournamentId'] ?? '',
       teamAId: data['teamAId'] ?? '',

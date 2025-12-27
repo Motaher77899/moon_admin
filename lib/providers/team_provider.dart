@@ -120,34 +120,119 @@ class TeamProvider extends ChangeNotifier {
   }
 
   // ✅ NEW: Fetch team players for lineup selection
+  // Future<void> fetchTeamPlayers(String teamId) async {
+  //   try {
+  //     final teamDoc = await FirebaseFirestore.instance
+  //         .collection('teams')
+  //         .doc(teamId)
+  //         .get();
+  //
+  //     final playerIds = List<String>.from(teamDoc.data()?['playerIds'] ?? []);
+  //
+  //     List<PlayerModel> players = [];
+  //     for (String playerId in playerIds) {
+  //       final playerDoc = await FirebaseFirestore.instance
+  //           .collection('players')
+  //           .doc(playerId)
+  //           .get();
+  //
+  //       if (playerDoc.exists) {
+  //         players.add(PlayerModel.fromFirestore(playerDoc));
+  //       }
+  //     }
+  //
+  //     teamPlayers[teamId] = players;
+  //     notifyListeners();
+  //   } catch (e) {
+  //     debugPrint('Error fetching team players: $e');
+  //   }
+  // }
+  // ✅ উন্নত fetchTeamPlayers – ক্যাশ চেক + ক্লিয়ার + নিরাপদ
   Future<void> fetchTeamPlayers(String teamId) async {
+    if (teamId.isEmpty) {
+      debugPrint('⚠️ fetchTeamPlayers: Empty teamId provided');
+      teamPlayers[teamId] = []; // নিরাপদে খালি লিস্ট সেট করুন
+      notifyListeners();
+      return;
+    }
+
+    // ক্যাশ চেক — যদি ডেটা থাকে তাহলে আবার লোড করার দরকার নেই
+    if (teamPlayers.containsKey(teamId) && teamPlayers[teamId]!.isNotEmpty) {
+      debugPrint('✅ Using cached players for team: $teamId (${teamPlayers[teamId]!.length} players)');
+      notifyListeners();
+      return;
+    }
+
+    debugPrint('🔄 Fetching players for team: $teamId');
+
     try {
+      // প্রথমে টিম ডকুমেন্ট চেক করুন
       final teamDoc = await FirebaseFirestore.instance
           .collection('teams')
           .doc(teamId)
           .get();
 
-      final playerIds = List<String>.from(teamDoc.data()?['playerIds'] ?? []);
-
-      List<PlayerModel> players = [];
-      for (String playerId in playerIds) {
-        final playerDoc = await FirebaseFirestore.instance
-            .collection('players')
-            .doc(playerId)
-            .get();
-
-        if (playerDoc.exists) {
-          players.add(PlayerModel.fromFirestore(playerDoc));
-        }
+      if (!teamDoc.exists) {
+        debugPrint('❌ Team document does not exist: $teamId');
+        teamPlayers[teamId] = [];
+        notifyListeners();
+        return;
       }
 
+      final data = teamDoc.data()!;
+      final rawPlayerIds = data['playerIds'];
+
+      List<String> playerIds = [];
+      if (rawPlayerIds is List) {
+        playerIds = rawPlayerIds.cast<String>();
+      } else if (rawPlayerIds is String && rawPlayerIds.isNotEmpty) {
+        // যদি কোনো কারণে string হয়ে থাকে (পুরানো ডেটা)
+        playerIds = rawPlayerIds.split(',');
+      }
+
+      debugPrint('   Found ${playerIds.length} player IDs');
+
+      List<PlayerModel> players = [];
+
+      if (playerIds.isEmpty) {
+        debugPrint('ℹ️ This team has no players assigned');
+      } else {
+        // সমান্তরালে লোড করুন — অনেক ফাস্ট হবে!
+        final futures = playerIds.map((playerId) async {
+          try {
+            final playerDoc = await FirebaseFirestore.instance
+                .collection('players')
+                .doc(playerId.trim())
+                .get();
+
+            if (playerDoc.exists) {
+              return PlayerModel.fromFirestore(playerDoc);
+            } else {
+              debugPrint('⚠️ Player not found: $playerId');
+              return null;
+            }
+          } catch (e) {
+            debugPrint('❌ Error loading player $playerId: $e');
+            return null;
+          }
+        });
+
+        final results = await Future.wait(futures);
+        players = results.whereType<PlayerModel>().toList();
+
+        debugPrint('✅ Successfully loaded ${players.length} players out of ${playerIds.length} IDs');
+      }
+
+      // সবসময় ওভাররাইড করুন
       teamPlayers[teamId] = players;
       notifyListeners();
-    } catch (e) {
-      debugPrint('Error fetching team players: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Fatal error in fetchTeamPlayers($teamId): $e');
+      debugPrint(stackTrace.toString());
+      teamPlayers[teamId] = []; // এররেও খালি লিস্ট দিন
+      notifyListeners();
     }
   }
-
   // ✅ Get cached team players (returns immediately)
   List<PlayerModel> getCachedTeamPlayers(String teamId) {
     return teamPlayers[teamId] ?? [];

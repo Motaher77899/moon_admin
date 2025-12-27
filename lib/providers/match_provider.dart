@@ -167,29 +167,49 @@ class MatchProvider extends TeamProvider {
   }
   // MatchProvider ক্লাসের ভেতরে এটি যোগ করুন
 // MatchProvider ক্লাসের ভেতরে এই মেথডটি যোগ করুন
-  Future<String?> updateLineUp(String matchId, LineUp? lineUpA, LineUp? lineUpB) async {
+//   Future<String?> updateLineUp(String matchId, LineUp? lineUpA, LineUp? lineUpB) async {
+//     try {
+//       Map<String, dynamic> updateData = {};
+//       if (lineUpA != null) updateData['lineUpA'] = lineUpA.toMap();
+//       if (lineUpB != null) updateData['lineUpB'] = lineUpB.toMap();
+//
+//       await _firestore.collection('matches').doc(matchId).update(updateData);
+//
+//       // লোকাল ডাটা আপডেট করুন
+//       int index = _matches.indexWhere((m) => m.id == matchId);
+//       if (index != -1) {
+//         _matches[index] = _matches[index].copyWith(
+//           lineUpA: lineUpA ?? _matches[index].lineUpA,
+//           lineUpB: lineUpB ?? _matches[index].lineUpB,
+//         );
+//         notifyListeners();
+//       }
+//       return null;
+//     } catch (e) {
+//       return e.toString();
+//     }
+//   }
+  Future<String?> updateLineUp(String matchId, LineUp? lineupA, LineUp? lineupB) async {
     try {
+      final docRef = FirebaseFirestore.instance.collection('matches').doc(matchId);
+
       Map<String, dynamic> updateData = {};
-      if (lineUpA != null) updateData['lineUpA'] = lineUpA.toMap();
-      if (lineUpB != null) updateData['lineUpB'] = lineUpB.toMap();
 
-      await _firestore.collection('matches').doc(matchId).update(updateData);
-
-      // লোকাল ডাটা আপডেট করুন
-      int index = _matches.indexWhere((m) => m.id == matchId);
-      if (index != -1) {
-        _matches[index] = _matches[index].copyWith(
-          lineUpA: lineUpA ?? _matches[index].lineUpA,
-          lineUpB: lineUpB ?? _matches[index].lineUpB,
-        );
-        notifyListeners();
+      if (lineupA != null) {
+        updateData['lineUpA'] = lineupA.toMap();
       }
-      return null;
+      if (lineupB != null) {
+        updateData['lineUpB'] = lineupB.toMap();
+      }
+
+      // 🔥 এখানে set() + merge: true ব্যবহার করুন
+      await docRef.set(updateData, SetOptions(merge: true));
+
+      return null; // সাকসেস
     } catch (e) {
       return e.toString();
     }
   }
-
   @override
   void clearCache() {
     _matches = [];

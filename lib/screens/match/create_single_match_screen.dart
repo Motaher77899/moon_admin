@@ -109,8 +109,10 @@ class _CreateSingleMatchScreenState extends State<CreateSingleMatchScreen> {
 
       final MatchModel newMatch = MatchModel(
         id: '',
-        teamA: _selectedTeamA!.id,
-        teamB: _selectedTeamB!.id,
+        teamAId: _selectedTeamA!.id,  // 🔥 এটা অবশ্যই যোগ করুন
+        teamBId: _selectedTeamB!.id,  // 🔥 এটা অবশ্যই যোগ করুন
+        teamA: _selectedTeamA!.id,    // legacy (পুরানো কোডের জন্য)
+        teamB: _selectedTeamB!.id,    // legacy
         teamAName: _selectedTeamA!.name,
         teamBName: _selectedTeamB!.name,
         teamALogo: _selectedTeamA!.logoUrl,
@@ -120,15 +122,12 @@ class _CreateSingleMatchScreenState extends State<CreateSingleMatchScreen> {
         date: matchDateTime,
         time: matchDateTime,
         status: 'upcoming',
-        venue: _venueController.text.trim().isEmpty
-            ? 'স্টেডিয়াম নির্ধারিত হয়নি'
-            : _venueController.text.trim(),
+        venue: _venueController.text.trim().isEmpty ? 'স্টেডিয়াম নির্ধারিত হয়নি' : _venueController.text.trim(),
         adminFullName: adminFullName,
         createdBy: adminFullName,
         createdAt: DateTime.now(),
         timeline: [],
       );
-
       final error = await matchProvider.createMatch(newMatch, adminFullName);
 
       if (!mounted) return;
